@@ -1,0 +1,19 @@
+body{
+    font-size: 16px;
+}
+
+.result-table {
+    width: 70%;
+    margin-top: 5%;
+    border: 1px solid #ddd;
+}
+
+.result-table .exploits{
+    width: 200px;
+    text-align: right;
+}
+
+.content-wrapper {
+    display: flex;
+    justify-content: center;
+}

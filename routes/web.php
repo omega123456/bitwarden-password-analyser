@@ -11,6 +11,5 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'PasswordCheck@index');
+Route::post('/', 'PasswordCheck@upload');
