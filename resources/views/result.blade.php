@@ -6,6 +6,7 @@
 
 @section('content')
     <div class="content-wrapper">
+        @include('uploadFile')
         <table class="table table-hover result-table">
             <thead>
             <tr>

@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller as BaseController;
 use App\Models\PasswordCheck as PasswordCheckModel;
-use Illuminate\Support\Collection;
+use Illuminate\{
+    Http\Request,
+    Routing\Controller as BaseController,
+    Support\Collection,
+    Validation\Factory as Validator
+};
+use JsonSchema\Exception\JsonDecodingException;
 
 class PasswordCheck extends BaseController
 {
@@ -17,11 +21,16 @@ class PasswordCheck extends BaseController
      * @var Request
      */
     private $request;
+    /**
+     * @var Validator
+     */
+    private $validator;
 
-    public function __construct(PasswordCheckModel $model, Request $request)
+    public function __construct(PasswordCheckModel $model, Request $request, Validator $validator)
     {
-        $this->model   = $model;
-        $this->request = $request;
+        $this->model     = $model;
+        $this->request   = $request;
+        $this->validator = $validator;
     }
 
     public function index()
@@ -31,7 +40,10 @@ class PasswordCheck extends BaseController
         }
 
         return view(
-            'uploadFile'
+            'index',
+            [
+                'error' => session('error')
+            ]
         );
     }
 
@@ -39,7 +51,17 @@ class PasswordCheck extends BaseController
     {
         $file = $this->request->file('passwordFile');
 
-        $this->model->processPasswords($file->openFile());
+        if (empty($file)) {
+            session()->flash('error', 'No file has been uploaded');
+
+            return redirect(route('/'));
+        }
+
+        try {
+            $this->model->processPasswords($file->openFile());
+        } catch (JsonDecodingException $e) {
+            session()->flash('error', 'Uploaded file is an invalid json');
+        }
 
         return redirect('/');
     }
@@ -49,7 +71,8 @@ class PasswordCheck extends BaseController
         return view(
             'result',
             [
-                'items' => $result
+                'items' => $result,
+                'error' => session('error')
             ]
         );
     }

@@ -1,0 +1,16 @@
+body{
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    flex-direction: column;
+    background-color: #fff;
+    color: #636b6f;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 200;
+    margin: 0;
+}
+
+.file-upload-wrapper{
+    width: 70%;
+}

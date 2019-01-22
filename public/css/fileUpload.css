@@ -1,0 +1,10 @@
+.file-upload-wrapper .panel-body{
+    display: flex;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.file-upload-wrapper .input-group{
+    flex-grow: 1;
+    margin-right: 10px;
+}

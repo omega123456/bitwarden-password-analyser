@@ -1,20 +1,31 @@
-@extends('base')
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/fileUpload.css') }}">
+@endpush
 
-@section('content')
+@push('js')
+    <script src="{{ asset('js/fileUpload.js') }}"></script>
+@endpush
+
+<div class="file-upload-wrapper">
     <form method="post" action="/" enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="panel-body ">
 
-            <div class="input-group file-upload-wrapper">
+            <div class="input-group">
                 <label class="input-group-btn">
-                                    <span class="btn btn-primary">
-                                        Browse… <input required type="file" name="passwordFile" style="display: none;">
+                                    <span class="btn btn-default">
+                                        Browse Password File <input required type="file" name="passwordFile" style="display: none;">
                                     </span>
                 </label>
                 <input type="text" class="form-control upload-text" readonly="">
             </div>
-            <button class="btn btn-primary">Upload</button>
+            <button class="btn btn-default">Upload</button>
 
         </div>
     </form>
-@endsection
+    @if($error)
+        <div class="alert alert-danger">
+            <strong>{{$error}}</strong>
+        </div>
+    @endif
+</div>

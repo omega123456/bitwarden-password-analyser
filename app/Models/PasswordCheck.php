@@ -4,6 +4,7 @@ namespace App\Models;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
+use JsonSchema\Exception\JsonDecodingException;
 use SplFileObject;
 
 class PasswordCheck
@@ -13,7 +14,7 @@ class PasswordCheck
         $passwords = json_decode($file->fread($file->getSize()));
 
         if (!$passwords) {
-            return [];
+            throw new JsonDecodingException();
         }
 
         $items = new Collection();
