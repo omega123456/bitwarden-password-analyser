@@ -34,6 +34,7 @@ class PasswordCheck
         }
 
         $this->checkForExploits($items);
+        $this->checkForDuplicatePassword($items);
         $this->removePasswords($items);
 
         session(['processedPasswords' => $items]);
@@ -61,6 +62,23 @@ class PasswordCheck
                     $fragments = explode(':', strrev($password));
 
                     $item->setExploited((int)current($fragments));
+                }
+            }
+        }
+    }
+
+    private function checkForDuplicatePassword(Collection $loginItems)
+    {
+        /**
+         * @var LoginItem $item
+         */
+        foreach ($loginItems as $item) {
+            /**
+             * @var LoginItem $item2
+             */
+            foreach ($loginItems as $item2) {
+                if ($item !== $item2 && $item->getPassword() == $item2->getPassword()) {
+                    $item->increaseNumberOfduplicates();
                 }
             }
         }

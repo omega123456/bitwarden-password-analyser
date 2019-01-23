@@ -9,7 +9,7 @@ body{
     border: 1px solid #ddd;
 }
 
-.result-table .exploits{
+.result-table .exploits, .result-table .duplicates{
     width: 200px;
     text-align: right;
 }
