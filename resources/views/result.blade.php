@@ -12,6 +12,7 @@
             <tr>
                 <th class="site-name">Site Name</th>
                 <th class="username">Username</th>
+                <th class="password-strength">Password Strength</th>
                 <th class="duplicates">Number of duplicates</th>
                 <th class="exploits">Number of exploits</th>
             </tr>
@@ -21,6 +22,8 @@
                 <tr class="{{$item->warningClass()}}">
                     <td class="site-name">{{$item->getSiteName()}}</td>
                     <td class="username">{{$item->getUsername()}}</td>
+                    <td class="password-strength {{$item->getPasswordStrengthClass()}}">
+                        <b>{{$item->getPasswordStrength()}}</b></td>
                     <td class="duplicates">{{$item->getNumberOfDuplicates()}}</td>
                     <td class="exploits">{{$item->getExploited()}}</td>
                 </tr>

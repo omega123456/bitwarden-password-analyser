@@ -6,9 +6,20 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use JsonSchema\Exception\JsonDecodingException;
 use SplFileObject;
+use ZxcvbnPhp\Zxcvbn;
 
 class PasswordCheck
 {
+    /**
+     * @var Zxcvbn
+     */
+    private $passwordStrengthCheck;
+
+    public function __construct(Zxcvbn $passwordStrengthCheck)
+    {
+        $this->passwordStrengthCheck = $passwordStrengthCheck;
+    }
+
     public function processPasswords(SplFileObject $file): array
     {
         $passwords = json_decode($file->fread($file->getSize()));
@@ -35,6 +46,7 @@ class PasswordCheck
 
         $this->checkForExploits($items);
         $this->checkForDuplicatePassword($items);
+        $this->checkPasswordStrength($items);
         $this->removePasswords($items);
 
         session(['processedPasswords' => $items]);
@@ -81,6 +93,21 @@ class PasswordCheck
                     $item->increaseNumberOfduplicates();
                 }
             }
+        }
+    }
+
+    private function checkPasswordStrength(Collection $loginItems)
+    {
+        /**
+         * @var LoginItem $item
+         */
+        foreach ($loginItems as $item) {
+            $strength = $this->passwordStrengthCheck->passwordStrength(
+                $item->getPassword(),
+                [$item->getUsername()]
+            );
+
+            $item->setPasswordStrength($strength['score']);
         }
     }
 

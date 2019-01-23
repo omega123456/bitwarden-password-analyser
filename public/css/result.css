@@ -9,13 +9,29 @@ body{
     border: 1px solid #ddd;
 }
 
-.result-table .exploits, .result-table .duplicates{
-    width: 200px;
+.result-table .exploits, .result-table .duplicates, .result-table .password-strength {
+    width: 180px;
     text-align: right;
+}
+
+.result-table th {
+    font-size: 15px;
 }
 
 .content-wrapper {
     display: flex;
     flex-direction: column;
-    width: 70%;
+    width: 80%;
+}
+
+.password-strength.strong {
+    color: green;
+}
+
+.password-strength.medium {
+    color: #d69b09;
+}
+
+.password-strength.weak {
+    color: red;
 }

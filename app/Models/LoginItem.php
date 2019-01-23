@@ -27,6 +27,11 @@ class LoginItem
      */
     private $numberOfDuplicates = 0;
 
+    /**
+     * @var int
+     */
+    private $passwordStrength = 0;
+
     public function __construct(string $siteName, string $username, string $password)
     {
         $this->siteName = $siteName;
@@ -114,5 +119,34 @@ class LoginItem
     public function increaseNumberOfduplicates()
     {
         $this->numberOfDuplicates++;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPasswordStrength(): int
+    {
+        return $this->passwordStrength;
+    }
+
+    /**
+     * @param int $passwordStrength
+     */
+    public function setPasswordStrength(int $passwordStrength): void
+    {
+        $this->passwordStrength = $passwordStrength;
+    }
+
+    public function getPasswordStrengthClass(): string
+    {
+        if ($this->getPasswordStrength() >= 3) {
+            return 'strong';
+        }
+
+        if ($this->getPasswordStrength() >= 2) {
+            return 'medium';
+        }
+
+        return 'weak';
     }
 }
