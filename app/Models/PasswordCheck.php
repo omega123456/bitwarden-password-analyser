@@ -112,7 +112,7 @@ class PasswordCheck
             $body->close();
         }
 
-        unset($guzzle, $result);
+        unset($guzzle, $body);
     }
 
     private function checkForDuplicatePassword(Collection $loginItems)
