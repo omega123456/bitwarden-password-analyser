@@ -13,7 +13,9 @@ use ZxcvbnPhp\Zxcvbn;
 
 class PasswordCheck
 {
-    public const MEMCACHE_PREFIX = 'check_result_';
+    public const  MEMCACHE_PREFIX = 'check_result_';
+
+    private const YEAR_IN_MINUTES = 525600;
 
     /**
      * @var Zxcvbn
@@ -27,9 +29,11 @@ class PasswordCheck
 
     public function queueRequest(UploadedFile $file)
     {
-        $key = session()->getId();
+        $key = uniqid($file->getFilename(), true);
 
-        cache()->forget(self::MEMCACHE_PREFIX . $key);
+        if (Cookie::get('file_hash')) {
+            cache()->forget(self::MEMCACHE_PREFIX . Cookie::get('file_hash'));
+        }
 
         Cookie::queue('file_hash', null, -1);
 
@@ -41,7 +45,7 @@ class PasswordCheck
             throw new JsonDecodingException();
         }
 
-        Cookie::queue('file_hash', $key, 525600);
+        Cookie::queue('file_hash', $key, self::YEAR_IN_MINUTES);
 
         ProcessPassword::dispatch($passwords, $key);
     }
