@@ -12,4 +12,5 @@
 */
 
 Route::get('/', 'PasswordCheck@index');
+Route::get('/check_file', 'PasswordCheck@checkFile');
 Route::post('/', 'PasswordCheck@upload');

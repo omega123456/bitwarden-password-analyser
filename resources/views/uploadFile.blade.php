@@ -10,7 +10,6 @@
     <form method="post" action="/" enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="panel-body ">
-
             <div class="input-group">
                 <label class="input-group-btn">
                                     <span class="btn btn-default">
@@ -19,7 +18,7 @@
                 </label>
                 <input type="text" class="form-control upload-text" readonly="">
             </div>
-            <button class="btn btn-default">Upload</button>
+            <button class="btn btn-default" id="upload-btn">Upload</button>
 
         </div>
     </form>

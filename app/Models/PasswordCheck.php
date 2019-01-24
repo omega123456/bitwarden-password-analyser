@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessPassword;
+use Cookie;
 use GuzzleHttp\Client;
-use Illuminate\Support\Collection;
+use Illuminate\{
+    Http\UploadedFile,
+    Support\Collection};
 use JsonSchema\Exception\JsonDecodingException;
-use SplFileObject;
 use ZxcvbnPhp\Zxcvbn;
 
 class PasswordCheck
 {
+    public const MEMCACHE_PREFIX = 'check_result_';
+
     /**
      * @var Zxcvbn
      */
@@ -20,14 +25,29 @@ class PasswordCheck
         $this->passwordStrengthCheck = $passwordStrengthCheck;
     }
 
-    public function processPasswords(SplFileObject $file): array
+    public function queueRequest(UploadedFile $file)
     {
+        $key = session()->getId();
+
+        cache()->forget(self::MEMCACHE_PREFIX . $key);
+
+        Cookie::queue('file_hash', null, -1);
+
+        $file = $file->openFile();
+
         $passwords = json_decode($file->fread($file->getSize()));
 
         if (!$passwords) {
             throw new JsonDecodingException();
         }
 
+        Cookie::queue('file_hash', $key, 525600);
+
+        ProcessPassword::dispatch($passwords, $key);
+    }
+
+    public function processPasswords(object $passwords): Collection
+    {
         $items = new Collection();
 
         foreach ($passwords->items as $item) {
@@ -49,9 +69,16 @@ class PasswordCheck
         $this->checkPasswordStrength($items);
         $this->removePasswords($items);
 
-        session(['processedPasswords' => $items]);
+        return $items;
+    }
 
-        return $passwords->items;
+    public function getProcessedResult(): Collection
+    {
+        if (!Cookie::get('file_hash')) {
+            return collect([]);
+        }
+
+        return cache(self::MEMCACHE_PREFIX . Cookie::get('file_hash')) ?: collect([]);
     }
 
     private function checkForExploits(Collection $loginItems)
@@ -66,7 +93,8 @@ class PasswordCheck
             $first5Character = substr($passwordHash, 0, 5);
             $lastCharacters  = substr($passwordHash, 5);
 
-            $result = (string)$guzzle->get('range/' . $first5Character)->getBody();
+            $body   = $guzzle->get('range/' . $first5Character)->getBody();
+            $result = (string)$body;
             $result = explode("\r\n", $result);
 
             foreach ($result as $password) {
@@ -76,7 +104,11 @@ class PasswordCheck
                     $item->setExploited((int)current($fragments));
                 }
             }
+
+            $body->close();
         }
+
+        unset($guzzle, $result);
     }
 
     private function checkForDuplicatePassword(Collection $loginItems)

@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PasswordCheck as PasswordCheckModel;
 use Illuminate\{
     Http\Request,
-    Routing\Controller as BaseController,
-    Support\Collection,
-    Validation\Factory as Validator
-};
+    Routing\Controller as BaseController};
 use JsonSchema\Exception\JsonDecodingException;
 
 class PasswordCheck extends BaseController
@@ -21,28 +18,24 @@ class PasswordCheck extends BaseController
      * @var Request
      */
     private $request;
-    /**
-     * @var Validator
-     */
-    private $validator;
 
-    public function __construct(PasswordCheckModel $model, Request $request, Validator $validator)
+    public function __construct(PasswordCheckModel $model, Request $request)
     {
         $this->model     = $model;
         $this->request   = $request;
-        $this->validator = $validator;
     }
 
     public function index()
     {
-        if (($result = session('processedPasswords')) !== null) {
-            return $this->renderResult($result);
+        if (!session('processing_file') && $this->model->getProcessedResult()->count()) {
+            return $this->renderResult();
         }
 
         return view(
             'index',
             [
-                'error' => session('error')
+                'error'        => session('error'),
+                'isProcessing' => session('processing_file')
             ]
         );
     }
@@ -58,7 +51,8 @@ class PasswordCheck extends BaseController
         }
 
         try {
-            $this->model->processPasswords($file->openFile());
+            $this->model->queueRequest($file);
+            session(['processing_file' => true]);
         } catch (JsonDecodingException $e) {
             session()->flash('error', 'Uploaded file is an invalid json');
         }
@@ -66,12 +60,23 @@ class PasswordCheck extends BaseController
         return redirect('/');
     }
 
-    private function renderResult(Collection $result)
+    public function checkFile()
+    {
+        $hasFileBeenProcessed = $this->model->getProcessedResult()->count() > 0;
+
+        if ($hasFileBeenProcessed) {
+            session(['processing_file' => false]);
+        }
+
+        return response()->json($hasFileBeenProcessed);
+    }
+
+    private function renderResult()
     {
         return view(
             'result',
             [
-                'items' => $result,
+                'items' => $this->model->getProcessedResult(),
                 'error' => session('error')
             ]
         );
