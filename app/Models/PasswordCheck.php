@@ -29,13 +29,7 @@ class PasswordCheck
 
     public function queueRequest(UploadedFile $file)
     {
-        $key = uniqid($file->getFilename(), true);
-
-        if (Cookie::get('file_hash')) {
-            cache()->forget(self::MEMCACHE_PREFIX . Cookie::get('file_hash'));
-        }
-
-        Cookie::queue('file_hash', null, -1);
+        $this->clearCurrentFileData();
 
         $file = $file->openFile();
 
@@ -44,6 +38,8 @@ class PasswordCheck
         if (!$passwords) {
             throw new JsonDecodingException();
         }
+
+        $key = uniqid($file->getFilename(), true);
 
         Cookie::queue('file_hash', $key, self::YEAR_IN_MINUTES);
 
@@ -83,6 +79,15 @@ class PasswordCheck
         }
 
         return cache(self::MEMCACHE_PREFIX . Cookie::get('file_hash')) ?: collect([]);
+    }
+
+    private function clearCurrentFileData()
+    {
+        if (Cookie::get('file_hash')) {
+            cache()->forget(self::MEMCACHE_PREFIX . Cookie::get('file_hash'));
+        }
+
+        Cookie::queue('file_hash', null, -1);
     }
 
     private function checkForExploits(Collection $loginItems)
