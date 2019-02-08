@@ -2,7 +2,7 @@
 
 /**
  * Laravel - A PHP Framework For Web Artisans
- * test5
+ * test6
  *
  * @package  Laravel
  * @author   Taylor Otwell <taylor@laravel.com>
