@@ -19,7 +19,8 @@ Bitwarden password analyser is a tool to check your passwords for vulnerabilitie
 
 ## Installation
 
-You will need to run `composer install` first, then you'll need to start up the queue consumer using the following command
+Copy the `.env.example` file to `/.env` and set the `QUEUE_CONNECTION` variable to the queue provider of your choice.
+After that you will need to run `composer install` first, then you can start up the queue consumer using the following command
 
     php artisan queue:work redis
 
