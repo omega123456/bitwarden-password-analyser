@@ -8,11 +8,14 @@ Bitwarden password analyser is a tool to check your passwords for vulnerabilitie
 
 ## Dependencies
 
- - php7.3
+ - `php: "^7.3"`
 
 ## Optional Dependencies
 
- - A queue managing system that laravel has a provider for eg. redis/sqs/mysql. Personally i would recommended redis,
+ - A queue managing system that laravel has a provider for eg. redis/sqs/mysql (you can skip this if you set
+ `sync` as the queue provider. That way it will process the items right away instead of queueing. 
+ The reason behind the queue is because it can take quite long to process the passwords especially if there are 
+ more than 100 of them, so the web server might time out). Personally i would recommended redis,
  as its easy to set up, and really lightweight. https://tecadmin.net/install-redis-ubuntu/
  - web server to run the application (you can also use [homestead](https://laravel.com/docs/5.7/homestead), or just run `php artisan serve` directly from the 
  root folder of the application)
