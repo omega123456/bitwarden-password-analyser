@@ -29,4 +29,4 @@ Replace `redis` with the chosen queue provider. You can read more about how to u
 
 Once all set up, just open the url in the browser, and upload the password json file you exported from the bitwarden plugin.
 
-https://help.bitwarden.com/article/export-your-data/
+https://help.bitwarden.com/article/export-your-data/ 
