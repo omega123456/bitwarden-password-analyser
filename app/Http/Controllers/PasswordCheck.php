@@ -2,73 +2,66 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PasswordCheck as PasswordCheckModel;
+use App\Http\Requests\UploadPasswordRequest;
+use App\Jobs\PasswordQueue;
+use App\Processors\PasswordProcessor;
+use Cookie;
 use Illuminate\{
-    Http\Request,
     Routing\Controller as BaseController};
-use JsonSchema\Exception\JsonDecodingException;
 
 class PasswordCheck extends BaseController
 {
     /**
-     * @var PasswordCheckModel
+     * @var PasswordProcessor
      */
-    private $model;
-    /**
-     * @var Request
-     */
-    private $request;
+    private $passwordProcessor;
 
-    public function __construct(PasswordCheckModel $model, Request $request)
+    public function __construct(PasswordProcessor $passwordProcessor)
     {
-        $this->model     = $model;
-        $this->request   = $request;
+        $this->passwordProcessor = $passwordProcessor;
     }
 
     public function index()
     {
-        if (!session('processing_file') && $this->model->getProcessedResult()->count()) {
+        if (!session('processing_file') && $this->passwordProcessor->getProcessedResult()->count()) {
             return $this->renderResult();
         }
 
         return view(
             'index',
             [
-                'error'        => session('error'),
-                'isProcessing' => session('processing_file')
+                'isProcessing' => session('processing_file'),
+                'error'        => session('error')
             ]
         );
     }
 
-    public function upload()
+    public function upload(UploadPasswordRequest $passwordRequest)
     {
-        $file = $this->request->file('passwordFile');
+        $file = $passwordRequest->file('passwordFile');
 
-        if (empty($file)) {
-            session()->flash('error', 'No file has been uploaded');
-
-            return redirect(route('/'));
-        }
-
-        try {
-            $this->model->queueRequest($file);
-            session(['processing_file' => true]);
-        } catch (JsonDecodingException $e) {
-            session()->flash('error', 'Uploaded file is an invalid json');
-        }
+        $this->passwordProcessor->clearCurrentFileData();
+        PasswordQueue::dispatch($file, $passwordRequest->post('password_manager_type'));
+        session(['processing_file' => true]);
 
         return redirect('/');
     }
 
     public function checkFile()
     {
-        $hasFileBeenProcessed = $this->model->getProcessedResult()->count() > 0;
+        $hasFileBeenProcessed = $this->passwordProcessor->getProcessedResult()->count() > 0;
+        $hasJobFailed         = PasswordQueue::hasJobFailed(Cookie::get('file_hash'));
 
-        if ($hasFileBeenProcessed) {
+        if ($hasFileBeenProcessed || $hasJobFailed) {
             session(['processing_file' => false]);
         }
 
-        return response()->json($hasFileBeenProcessed);
+        if ($hasJobFailed) {
+            $this->passwordProcessor->clearCurrentFileData();
+            session()->flash('error', 'Could not process the uploaded password file');
+        }
+
+        return response()->json($hasFileBeenProcessed || $hasJobFailed);
     }
 
     private function renderResult()
@@ -76,7 +69,7 @@ class PasswordCheck extends BaseController
         return view(
             'result',
             [
-                'items' => $this->model->getProcessedResult(),
+                'items' => $this->passwordProcessor->getProcessedResult(),
                 'error' => session('error')
             ]
         );

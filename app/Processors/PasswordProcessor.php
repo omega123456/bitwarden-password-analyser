@@ -1,75 +1,48 @@
 <?php
 
-namespace App\Models;
+namespace App\Processors;
 
-use App\Jobs\ProcessPassword;
 use Cookie;
 use GuzzleHttp\Client;
 use Illuminate\{
     Http\UploadedFile,
     Support\Collection};
-use JsonSchema\Exception\JsonDecodingException;
 use ZxcvbnPhp\Zxcvbn;
 
-class PasswordCheck
+abstract class PasswordProcessor
 {
-    public const  MEMCACHE_PREFIX = 'check_result_';
-
-    private const YEAR_IN_MINUTES = 525600;
-
+    public const MEMCACHE_PREFIX = 'check_result_';
     /**
      * @var Zxcvbn
      */
-    private $passwordStrengthCheck;
+    protected $passwordStrengthCheck;
+
+    abstract public function isValidFile(UploadedFile $file): bool;
+
+    abstract public function processPasswords(object $passwords): Collection;
 
     public function __construct(Zxcvbn $passwordStrengthCheck)
     {
         $this->passwordStrengthCheck = $passwordStrengthCheck;
     }
 
-    public function queueRequest(UploadedFile $file)
+    public static function getClass(?string $passwordManagerType): string
     {
-        $this->clearCurrentFileData();
-
-        $file = $file->openFile();
-
-        $passwords = json_decode($file->fread($file->getSize()));
-
-        if (!$passwords) {
-            throw new JsonDecodingException();
+        switch ($passwordManagerType) {
+            case 'lastpass':
+                return LastPassProcessor::class;
+            default:
+                return BitwardenProcessor::class;
         }
-
-        $key = uniqid($file->getFilename(), true);
-
-        Cookie::queue('file_hash', $key, self::YEAR_IN_MINUTES);
-
-        ProcessPassword::dispatch($passwords, $key);
     }
 
-    public function processPasswords(object $passwords): Collection
+    public function clearCurrentFileData()
     {
-        $items = new Collection();
-
-        foreach ($passwords->items as $item) {
-            if (!isset($item->login)) {
-                continue;
-            }
-
-            $items->push(
-                new LoginItem(
-                    $item->name,
-                    (string)$item->login->username,
-                    (string)$item->login->password
-                )
-            );
+        if (Cookie::get('file_hash')) {
+            cache()->forget(self::MEMCACHE_PREFIX . Cookie::get('file_hash'));
         }
 
-        $this->checkForExploits($items);
-        $this->checkForDuplicatePassword($items);
-        $this->checkPasswordStrength($items);
-        $this->removePasswords($items);
-
-        return $items;
+        Cookie::queue('file_hash', null, -1);
     }
 
     public function getProcessedResult(): Collection
@@ -81,16 +54,7 @@ class PasswordCheck
         return cache(self::MEMCACHE_PREFIX . Cookie::get('file_hash')) ?: collect([]);
     }
 
-    private function clearCurrentFileData()
-    {
-        if (Cookie::get('file_hash')) {
-            cache()->forget(self::MEMCACHE_PREFIX . Cookie::get('file_hash'));
-        }
-
-        Cookie::queue('file_hash', null, -1);
-    }
-
-    private function checkForExploits(Collection $loginItems)
+    protected function checkForExploits(Collection $loginItems)
     {
         $guzzle = new Client(['base_uri' => 'https://api.pwnedpasswords.com/']);
 
@@ -120,7 +84,7 @@ class PasswordCheck
         unset($guzzle, $body);
     }
 
-    private function checkForDuplicatePassword(Collection $loginItems)
+    protected function checkForDuplicatePassword(Collection $loginItems)
     {
         /**
          * @var LoginItem $item
@@ -137,7 +101,7 @@ class PasswordCheck
         }
     }
 
-    private function checkPasswordStrength(Collection $loginItems)
+    protected function checkPasswordStrength(Collection $loginItems)
     {
         /**
          * @var LoginItem $item
@@ -152,7 +116,7 @@ class PasswordCheck
         }
     }
 
-    private function removePasswords(Collection $loginItems)
+    protected function removePasswords(Collection $loginItems)
     {
         /**
          * @var LoginItem $item

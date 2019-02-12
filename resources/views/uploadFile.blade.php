@@ -22,9 +22,16 @@
 
         </div>
     </form>
-    @if($error)
+    @if(!empty($error))
         <div class="alert alert-danger">
             <strong>{{$error}}</strong>
+        </div>
+    @endif
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            @foreach ($errors->all() as $error)
+            <strong>{{$error}}</strong>
+            @endforeach
         </div>
     @endif
 </div>
