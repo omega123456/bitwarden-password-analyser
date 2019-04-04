@@ -13,7 +13,8 @@
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
         "bjeavons/zxcvbn-php": "^0.4",
-        "predis/predis": "^1.1"
+        "predis/predis": "^1.1",
+        "guzzlehttp/guzzle": "^6.3"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.5",
